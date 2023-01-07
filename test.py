@@ -156,7 +156,7 @@ def main_window(screen, step1, key):
                 self.image = pygame.Surface([0, 0])
             if pygame.sprite.spritecollideany(self, meteors):
                 # Сигнал об удалении при столкновении
-                self.rect.y -= 5
+                self.rect.y -= 30
                 self.is_del = True
 
     class Meteorite(pygame.sprite.Sprite):
