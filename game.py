@@ -2,9 +2,11 @@ import pygame
 import os
 import sys
 from random import randint
+from end import game_killer
 
 FPS = 50
 WIDTH, HEIGHT = 800, 900
+SCORE = 0
 clock = pygame.time.Clock()
 regulator = pygame.time.Clock()
 
@@ -62,23 +64,6 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-# Установка текста
-
-
-def setText(screen, text, font):
-    # Установка шрифта
-    font = pygame.font.SysFont(font, 70)
-    # Поверхность с текстом
-    string_rendered = font.render(text, 0, pygame.Color('white'))
-    # Размеры текста
-    intro_rect = string_rendered.get_rect()
-    # Отступ сверху
-    intro_rect.top = 150
-    # Центрирование
-    intro_rect.x = WIDTH / 2 - intro_rect.width / 2
-    # Наложение на экран текста
-    screen.blit(string_rendered, intro_rect)
-
 
 def main_window(screen, step1, key):
     # Заголовок окна
@@ -92,7 +77,6 @@ def main_window(screen, step1, key):
     # Пользовательские события
     pygame.time.set_timer(pygame.USEREVENT, 15)
     pygame.time.set_timer(pygame.USEREVENT + 1, 900)
-    # setText(screen, 'Click to continue', pygame.font.get_fonts()[52])
 
     class Starship(pygame.sprite.Sprite):
         # подгрузка картинки
@@ -104,6 +88,7 @@ def main_window(screen, step1, key):
             super().__init__(*group)
             # получение переменной из класса
             self.image = Starship.image
+            self.mask = pygame.mask.from_surface(self.image)
             # получение размеров изображения
             self.rect = self.image.get_rect()
             # изначальное расположение
@@ -126,7 +111,7 @@ def main_window(screen, step1, key):
                 self.is_shoot = True
 
         def shooting(self):
-            if regulator.tick() > 25:
+            if regulator.tick() > 28:
                 Bullet(bullets, self.rect.x + 35, self.rect.y + 20)
                 Bullet(bullets, self.rect.x + 65, self.rect.y + 20)
 
@@ -159,6 +144,7 @@ def main_window(screen, step1, key):
                 self.is_del = True
 
     class Meteorite(pygame.sprite.Sprite):
+        global SCORE
         # подгрузка картинки
         image = load_image("meteorite.png")
         boom = load_image("boom.png")
@@ -169,6 +155,7 @@ def main_window(screen, step1, key):
             super().__init__(*group)
             # получение переменной из класса
             self.image = Meteorite.image
+            self.mask = pygame.mask.from_surface(self.image)
             # получение размеров изображения
             self.rect = self.image.get_rect()
             # изначальное расположение
@@ -184,8 +171,14 @@ def main_window(screen, step1, key):
             self.is_del = 0
 
         def update(self):
+            global SCORE
             # перемещение
             self.rect = self.rect.move(self.x_speed, self.y_speed)
+
+            # Проверка на столкновение с игроком
+            if pygame.sprite.collide_mask(self, starship):
+                game_killer(screen, SCORE)
+
             if pygame.sprite.spritecollideany(self, vertical_borders):
                 if abs(self.x_speed // 1.5) > 2:
                     # Изменение направления и модуля скорости при столкновении
@@ -210,6 +203,7 @@ def main_window(screen, step1, key):
                 self.image = Meteorite.boom
                 self.angle, self.change, self.x_speed, self.y_speed = 0, 0, 0, 0
             if self.is_del == 40:
+                SCORE += 1
                 broken_meteors.remove(self)
             pos = (self.rect.x + self.rect.width / 2,
                    self.rect.y + self.rect.height / 2)

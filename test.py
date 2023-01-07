@@ -62,23 +62,6 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-# Установка текста
-
-
-def setText(screen, text, font):
-    # Установка шрифта
-    font = pygame.font.SysFont(font, 70)
-    # Поверхность с текстом
-    string_rendered = font.render(text, 0, pygame.Color('white'))
-    # Размеры текста
-    intro_rect = string_rendered.get_rect()
-    # Отступ сверху
-    intro_rect.top = 150
-    # Центрирование
-    intro_rect.x = WIDTH / 2 - intro_rect.width / 2
-    # Наложение на экран текста
-    screen.blit(string_rendered, intro_rect)
-
 
 def main_window(screen, step1, key):
     # Заголовок окна
@@ -126,7 +109,7 @@ def main_window(screen, step1, key):
                 self.is_shoot = True
 
         def shooting(self):
-            if regulator.tick() > 25:
+            if regulator.tick() > 28:
                 Bullet(bullets, self.rect.x + 35, self.rect.y + 20)
                 Bullet(bullets, self.rect.x + 65, self.rect.y + 20)
 

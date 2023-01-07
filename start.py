@@ -1,7 +1,6 @@
 import pygame
 import os
 import sys
-from random import *
 from game import main_window
 
 FPS = 50
