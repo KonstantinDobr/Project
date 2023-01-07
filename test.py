@@ -9,7 +9,7 @@ clock = pygame.time.Clock()
 regulator = pygame.time.Clock()
 
 
-def blitRotate(surf, image, pos, originPos, angle):
+def blitRotate(surf, image, pos, originPos, angle, y):
 
     # offset from pivot to center
     image_rect = image.get_rect(
@@ -20,8 +20,7 @@ def blitRotate(surf, image, pos, originPos, angle):
     rotated_offset = offset_center_to_pivot.rotate(-angle)
 
     # roatetd image center
-    rotated_image_center = (pos[0] - rotated_offset.x,
-                            HEIGHT - 150 / 2)
+    rotated_image_center = (pos[0] - rotated_offset.x, y)
 
     # get a rotated image
     rotated_image = pygame.transform.rotate(image, angle)
@@ -152,9 +151,12 @@ def main_window(screen, step1, key):
             # перемещение
             self.rect.y -= 15
             if self.is_del:
+                # "Удаление" экземпляра класса
                 self.rect.x = WIDTH * 20
                 self.image = pygame.Surface([0, 0])
             if pygame.sprite.spritecollideany(self, meteors):
+                # Сигнал об удалении при столкновении
+                self.rect.y -= 5
                 self.is_del = True
 
     class Meteorite(pygame.sprite.Sprite):
@@ -184,13 +186,32 @@ def main_window(screen, step1, key):
             # перемещение
             self.rect = self.rect.move(self.x_speed, self.y_speed)
             if pygame.sprite.spritecollideany(self, vertical_borders):
-                self.x_speed = -self.x_speed
+                if abs(self.x_speed // 1.5) > 2:
+                    # Изменение направления и модуля скорости при столкновении
+                    if self.x_speed > 0:
+                        self.rect.x -= 5
+                    else:
+                        self.rect.x += 5
+                    self.x_speed = -self.x_speed // 1.5
+                else:
+                    self.x_speed = -self.x_speed
+                # Изменение скорости вращения при столкновении
+                if self.change // 1.5 != 0:
+                    self.change = self.change // 1.5
             if pygame.sprite.spritecollideany(self, bullets):
+                # Увеличение урона при попадании
                 self.damage += 1
-                print(self.damage)
-                if self.damage >= 1:
+                # "Удаление" экземпляра при столкновении
+                if self.damage >= 3:
                     self.rect.x = WIDTH * 20
                     self.image = pygame.Surface([0, 0])
+            pos = (self.rect.x + self.rect.width / 2,
+                   self.rect.y + self.rect.height / 2)
+            # Отрисовка метеорита с соответствующим поворотом
+            blitRotate(screen, self.image, pos, (self.rect.x,
+                       self.rect.y), self.angle, self.rect.y)
+            # Изменение угла поворота
+            self.angle += self.change
 
     class Border(pygame.sprite.Sprite):
         # строго вертикальный отрезок
@@ -253,6 +274,7 @@ def main_window(screen, step1, key):
                     starship.is_shoot = False
                 starship.is_stop = True
             if event.type == pygame.USEREVENT + 1:
+                # Создание метеорита
                 Meteorite(meteors)
 
         # Координаты точки поворота
@@ -263,34 +285,34 @@ def main_window(screen, step1, key):
         if starship.is_right == 1 and starship.angle != 25:
             starship.angle += 1
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), -starship.angle)
+                                                     starship.rect.y), -starship.angle, HEIGHT - 150 / 2)
         # Поворот налево
         elif starship.is_left == 1 and starship.angle != 25:
             starship.angle += 1
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), starship.angle)
+                                                     starship.rect.y), starship.angle, HEIGHT - 150 / 2)
         # Поворот направо при крайних значениях
         elif starship.is_right == 1 and starship.angle == 25:
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), -starship.angle)
+                                                     starship.rect.y), -starship.angle, HEIGHT - 150 / 2)
         # Поворот налево при крайних значениях
         elif starship.is_left == 1 and starship.angle == 25:
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), starship.angle)
+                                                     starship.rect.y), starship.angle, HEIGHT - 150 / 2)
         # Состояние покоя
         elif starship.angle == 0:
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), starship.angle)
+                                                     starship.rect.y), starship.angle, HEIGHT - 150 / 2)
         # Возвращение в состояние покоя при повороте направо
         elif starship.is_stop and starship.is_right == 2 and starship.angle != 0:
             starship.angle -= 1
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), -starship.angle)
+                                                     starship.rect.y), -starship.angle, HEIGHT - 150 / 2)
         # Возвращение в состояние покоя при повороте налево
         elif starship.is_stop and starship.is_left == 2 and starship.angle != 0:
             starship.angle -= 1
             blitRotate(screen, starship.image, pos, (starship.rect.x,
-                                                     starship.rect.y), starship.angle)
+                                                     starship.rect.y), starship.angle, HEIGHT - 150 / 2)
         # Стабилизация
         elif starship.is_stop and starship.is_right == 2 and starship.angle == 0:
             starship.is_right == 0
@@ -306,9 +328,10 @@ def main_window(screen, step1, key):
 
         # вызов метода update для КАЖДОГО спрайта
         all_sprites.update(key)
+        # Снаряды
         bullets.draw(screen)
         bullets.update()
-        meteors.draw(screen)
+        # Метеориты
         meteors.update()
 
         # Отрисовка кадров
