@@ -152,9 +152,8 @@ def main_window(screen, step1, key):
             self.rect.y -= 15
             if self.is_del:
                 # "Удаление" экземпляра класса
-                self.rect.x = WIDTH * 20
-                self.image = pygame.Surface([0, 0])
-            if pygame.sprite.spritecollideany(self, meteors):
+                bullets.remove(self)
+            if pygame.sprite.spritecollideany(self, meteors) or self.rect.y < -50:
                 # Сигнал об удалении при столкновении
                 self.rect.y -= 40
                 self.is_del = True
@@ -205,14 +204,17 @@ def main_window(screen, step1, key):
                 self.damage += 1
             # "Удаление" экземпляра при столкновении
             if self.damage >= 16:
+                meteors.remove(self)
+                broken_meteors.add(self)
                 self.is_del += 1
                 self.image = Meteorite.boom
                 self.angle, self.change, self.x_speed, self.y_speed = 0, 0, 0, 0
             if self.is_del == 40:
-                self.rect.x = WIDTH * 20
-                self.image = pygame.Surface([0, 0])
+                broken_meteors.remove(self)
             pos = (self.rect.x + self.rect.width / 2,
                    self.rect.y + self.rect.height / 2)
+            if self.rect.y > HEIGHT:
+                meteors.remove(self)
             # Отрисовка метеорита с соответствующим поворотом
             blitRotate(screen, self.image, pos, (self.rect.x,
                        self.rect.y), self.angle, self.rect.y)
@@ -235,6 +237,8 @@ def main_window(screen, step1, key):
     meteors = pygame.sprite.Group()
     # Создание группы, содержащей границы
     vertical_borders = pygame.sprite.Group()
+    # Создание группы, содержащей спрайты уничтоженных метеоритов
+    broken_meteors = pygame.sprite.Group()
 
     # создадим спрайт, в группе all_sprites
     starship = Starship(all_sprites)
@@ -339,6 +343,8 @@ def main_window(screen, step1, key):
         bullets.update()
         # Метеориты
         meteors.update()
+        # Уничтоженные метеориты
+        broken_meteors.update()
 
         # Отрисовка кадров
         clock.tick(FPS)
