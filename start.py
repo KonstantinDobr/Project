@@ -41,6 +41,7 @@ def terminate():
     pygame.quit()
     sys.exit()
 
+
 def start_screen(screen):
     # Заголовок окна
     pygame.display.set_caption('start window')
@@ -48,7 +49,8 @@ def start_screen(screen):
     # Загрузка текста
     text = pygame.transform.scale(load_image('text.png'), (600, 120))
     # Загрузка картинки корабля
-    starship_image = pygame.transform.scale(load_image('starship.png'), (150, 150))
+    starship_image = pygame.transform.scale(
+        load_image('starship.png'), (150, 150))
 
     # Загрузка фона
     image = load_image('stars2.jpg')
@@ -70,7 +72,10 @@ def start_screen(screen):
                 terminate()
             if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 # Продолжение
-                main_window(screen, step1, event.key)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    main_window(screen, step1, None)
+                else:
+                    main_window(screen, step1, event.key)
             if event.type == pygame.USEREVENT:
                 # Отрисовка двух поверхностей
                 screen.blit(fon1, (-13, step1 - 26))
@@ -79,7 +84,7 @@ def start_screen(screen):
                 step1 += 1
                 # Сброс шага в крайней позиции
                 if step1 == 952:
-                        step1 = 30
+                    step1 = 30
 
                 # Отрисовка текста
                 screen.blit(text, (100, y_pos))

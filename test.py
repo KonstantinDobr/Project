@@ -91,7 +91,7 @@ def main_window(screen, step1, key):
 
     # Пользовательские события
     pygame.time.set_timer(pygame.USEREVENT, 15)
-    pygame.time.set_timer(pygame.USEREVENT + 1, 1000)
+    pygame.time.set_timer(pygame.USEREVENT + 1, 900)
     # setText(screen, 'Click to continue', pygame.font.get_fonts()[52])
 
     class Starship(pygame.sprite.Sprite):
@@ -126,7 +126,7 @@ def main_window(screen, step1, key):
                 self.is_shoot = True
 
         def shooting(self):
-            if regulator.tick() > 30:
+            if regulator.tick() > 25:
                 Bullet(bullets, self.rect.x + 35, self.rect.y + 20)
                 Bullet(bullets, self.rect.x + 65, self.rect.y + 20)
 
@@ -156,12 +156,13 @@ def main_window(screen, step1, key):
                 self.image = pygame.Surface([0, 0])
             if pygame.sprite.spritecollideany(self, meteors):
                 # Сигнал об удалении при столкновении
-                self.rect.y -= 30
+                self.rect.y -= 40
                 self.is_del = True
 
     class Meteorite(pygame.sprite.Sprite):
         # подгрузка картинки
         image = load_image("meteorite.png")
+        boom = load_image("boom.png")
 
         def __init__(self, *group):
             # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
@@ -181,6 +182,7 @@ def main_window(screen, step1, key):
             self.angle = 0
             self.change = randint(-5, 5)
             self.damage = 0
+            self.is_del = 0
 
         def update(self):
             # перемещение
@@ -201,10 +203,14 @@ def main_window(screen, step1, key):
             if pygame.sprite.spritecollideany(self, bullets):
                 # Увеличение урона при попадании
                 self.damage += 1
-                # "Удаление" экземпляра при столкновении
-                if self.damage >= 3:
-                    self.rect.x = WIDTH * 20
-                    self.image = pygame.Surface([0, 0])
+            # "Удаление" экземпляра при столкновении
+            if self.damage >= 16:
+                self.is_del += 1
+                self.image = Meteorite.boom
+                self.angle, self.change, self.x_speed, self.y_speed = 0, 0, 0, 0
+            if self.is_del == 40:
+                self.rect.x = WIDTH * 20
+                self.image = pygame.Surface([0, 0])
             pos = (self.rect.x + self.rect.width / 2,
                    self.rect.y + self.rect.height / 2)
             # Отрисовка метеорита с соответствующим поворотом
@@ -337,6 +343,7 @@ def main_window(screen, step1, key):
         # Отрисовка кадров
         clock.tick(FPS)
         pygame.display.flip()
+
 
 
 pygame.init()
