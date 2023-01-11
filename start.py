@@ -1,44 +1,26 @@
 import pygame
-import os
-import sys
+from functions import load_image, terminate, setText
+import sqlite3
 from game import main_window
+
 
 FPS = 50
 WIDTH, HEIGHT = 800, 900
 clock = pygame.time.Clock()
 
-# Обработка изображения
+# Подключение к БД
+con = sqlite3.connect("database\scores.sqlite")
 
+# Создание курсора
+cur = con.cursor()
+# Выполнение запроса и получение всех результатов
+scores = list(cur.execute("""SELECT score FROM scores""").fetchall())
 
-def load_image(name, colorkey=None):
-    # локальное имя
-    fullname = os.path.join('data', name)
-    # если файл не существует, то выходим
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    # загрузка изображения
-    image = pygame.image.load(fullname)
+best_score = max(scores)[0]
+last_score = scores[-1][0]
 
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            # первый пиксель
-            colorkey = image.get_at((0, 0))
-        # прозрачность фона
-        image.set_colorkey(colorkey)
-    else:
-        #  сохранение прозрачности
-        image = image.convert_alpha()
-    # возвращение картинки
-    return image
+con.close()
 
-# Выход из приложения
-
-
-def terminate():
-    pygame.quit()
-    sys.exit()
 
 
 def start_screen(screen):
@@ -86,7 +68,8 @@ def start_screen(screen):
                     step1 = 30
 
                 # Отрисовка текста
-                screen.blit(text, (100, y_pos))
+                setText(screen, 'Click to play', pygame.font.get_fonts()
+                        [9], 70, 'white', 0, y_pos, True)
                 # Сброс шага в крайней позиции
                 if (y_pos == 100 and step2 == -1):
                     step2 = 1
@@ -95,8 +78,14 @@ def start_screen(screen):
                 # Сдвиг
                 y_pos += step2
 
+        # Лучший и последний счёт
+        setText(screen, f'Best score: {best_score}', pygame.font.get_fonts()
+                [9], 40, 'white', 100, 300)
+        setText(screen, f'Last score: {last_score}', pygame.font.get_fonts()
+                [9], 40, 'white', 100, 400)
+
         # Отрисовка звезолёта
-        screen.blit(starship_image, (325,  750))
+        screen.blit(starship_image, (325, 750))
         # Отрисовка кадров
         clock.tick(FPS)
         pygame.display.flip()

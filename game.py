@@ -1,68 +1,14 @@
 import pygame
-import os
-import sys
 from random import randint
 from end import game_killer
+from functions import blitRotate, load_image, terminate, setText
+import sqlite3
 
 FPS = 50
 WIDTH, HEIGHT = 800, 900
 SCORE = 0
 clock = pygame.time.Clock()
 regulator = pygame.time.Clock()
-
-
-def blitRotate(surf, image, pos, originPos, angle, y):
-
-    # offset from pivot to center
-    image_rect = image.get_rect(
-        topleft=(originPos))
-    offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
-
-    # roatated offset from pivot to center
-    rotated_offset = offset_center_to_pivot.rotate(-angle)
-
-    # roatetd image center
-    rotated_image_center = (pos[0] - rotated_offset.x, y)
-
-    # get a rotated image
-    rotated_image = pygame.transform.rotate(image, angle)
-    rotated_image_rect = rotated_image.get_rect(center=rotated_image_center)
-
-    # Наложение на экран
-    surf.blit(rotated_image, rotated_image_rect)
-
-# Обработка изображения
-
-
-def load_image(name, colorkey=None):
-    # локальное имя
-    fullname = os.path.join('data', name)
-    # если файл не существует, то выходим
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    # загрузка изображения
-    image = pygame.image.load(fullname)
-
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            # первый пиксель
-            colorkey = image.get_at((0, 0))
-        # прозрачность фона
-        image.set_colorkey(colorkey)
-    else:
-        #  сохранение прозрачности
-        image = image.convert_alpha()
-    # возвращение картинки
-    return image
-
-# Выход из приложения
-
-
-def terminate():
-    pygame.quit()
-    sys.exit()
 
 
 def main_window(screen, step1, key):
@@ -103,11 +49,11 @@ def main_window(screen, step1, key):
 
         def update(self, key):
             # перемещение
-            if key == pygame.K_d:
+            if key == pygame.K_d or pygame.K_d in pygame.key.get_pressed():
                 self.is_right = 1
-            if key == pygame.K_a:
+            if key == pygame.K_a or pygame.K_a in pygame.key.get_pressed():
                 self.is_left = 1
-            if key == pygame.K_SPACE:
+            if key == pygame.K_w or pygame.K_w in pygame.key.get_pressed():
                 self.is_shoot = True
 
         def shooting(self):
@@ -176,7 +122,19 @@ def main_window(screen, step1, key):
             self.rect = self.rect.move(self.x_speed, self.y_speed)
 
             # Проверка на столкновение с игроком
-            if pygame.sprite.collide_mask(self, starship):
+            if pygame.sprite.collide_mask(self, starship) and self.damage < 16:
+
+                # Подключение к БД
+                con = sqlite3.connect("database\scores.sqlite")
+
+                # Создание курсора
+                cur = con.cursor()
+                # Добавление резултата в таблицу
+                cur.execute(
+                    f"""INSERT INTO scores(score) VALUES({SCORE})""")
+                con.commit()
+                con.close()
+
                 game_killer(screen, SCORE)
 
             if pygame.sprite.spritecollideany(self, vertical_borders):
@@ -203,12 +161,13 @@ def main_window(screen, step1, key):
                 self.image = Meteorite.boom
                 self.angle, self.change, self.x_speed, self.y_speed = 0, 0, 0, 0
             if self.is_del == 40:
-                SCORE += 1
                 broken_meteors.remove(self)
             pos = (self.rect.x + self.rect.width / 2,
                    self.rect.y + self.rect.height / 2)
             if self.rect.y > HEIGHT:
                 meteors.remove(self)
+            if self.damage == 16:
+                SCORE += 1
             # Отрисовка метеорита с соответствующим поворотом
             blitRotate(screen, self.image, pos, (self.rect.x,
                        self.rect.y), self.angle, self.rect.y)
@@ -263,7 +222,7 @@ def main_window(screen, step1, key):
             if event.type == pygame.KEYDOWN:
                 # Обработка нажатия на клавишу
                 key = event.key
-                if key != pygame.K_SPACE:
+                if key in [pygame.K_a, pygame.K_d]:
                     starship.is_stop = False
             if event.type == pygame.KEYUP:
                 key = None
@@ -274,7 +233,7 @@ def main_window(screen, step1, key):
                 elif event.key == pygame.K_d:
                     starship.is_right = 2
                     starship.is_left = 0
-                elif event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_w:
                     starship.is_shoot = False
                 starship.is_stop = True
             if event.type == pygame.USEREVENT + 1:
@@ -339,6 +298,10 @@ def main_window(screen, step1, key):
         meteors.update()
         # Уничтоженные метеориты
         broken_meteors.update()
+
+        # Вывод текущего счёта
+        setText(screen, f'{SCORE}', pygame.font.get_fonts()
+                [9], 50, 'white', 20, 20)
 
         # Отрисовка кадров
         clock.tick(FPS)
