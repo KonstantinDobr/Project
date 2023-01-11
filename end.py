@@ -1,6 +1,5 @@
 import pygame
 from functions import terminate, setText
-from start import start_screen
 
 FPS = 50
 WIDTH, HEIGHT = 800, 900
@@ -34,7 +33,7 @@ def game_killer(screen, score):
 
         # Отрисовка текста
         setText(screen, f'Your score: {score}', pygame.font.get_fonts()
-                [9], font_size, 'black', 20, 450, True)
+                [9], font_size, 'black', 20, 380, True)
         if font_size != 80:
             font_size += 1
 
