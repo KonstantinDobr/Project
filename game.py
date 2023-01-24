@@ -57,7 +57,7 @@ def main_window(screen, step1, key):
                 self.is_shoot = True
 
         def shooting(self):
-            if regulator.tick() > 28:
+            if regulator.tick() > 27:
                 Bullet(bullets, self.rect.x + 35, self.rect.y + 20)
                 Bullet(bullets, self.rect.x + 65, self.rect.y + 20)
 
